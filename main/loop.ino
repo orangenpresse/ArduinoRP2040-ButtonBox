@@ -9,11 +9,28 @@ void setup() {
     gp[i].buttons = 0;
   }
 
+
+  // Begin device if necessary
+  if (!TinyUSBDevice.isInitialized()) {
+    TinyUSBDevice.begin(0);
+  }
+  // Set name and Id
+  TinyUSBDevice.setManufacturerDescriptor("OPR");
+  TinyUSBDevice.setProductDescriptor("Box");
+  TinyUSBDevice.setID(0x2e8a, 0x0030);
+
+  // Set hid begin
   Serial.begin(115200);
+  usb_hid.setPollInterval(2);
+  usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));
   usb_hid.begin();
 
-  // wait until device mounted
-  while (!TinyUSBDevice.mounted()) delay(1);
+  // Reatach device if already mounted
+   if (TinyUSBDevice.mounted()) {
+    TinyUSBDevice.detach();
+    delay(10);
+    TinyUSBDevice.attach();
+  }
 
   // Display
   Wire.setSDA(SDA);
@@ -45,6 +62,11 @@ void setup() {
 }
 
 void loop() {
+  // return if not mounted
+  if (!TinyUSBDevice.mounted()) {
+    return;
+  }
+
   handleSerial();
   handleCurrentPage();
   handleDisplay();
